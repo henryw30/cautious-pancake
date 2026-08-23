@@ -16,8 +16,9 @@
       "extensions": [
         "ms-python.python",
         "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
         "charliermarsh.ruff",
-        "CHIPSAlliance.verible"
+        "mshr-h.veriloghdl"
       ]
     }
   }

@@ -23,11 +23,20 @@
         "editor.tabSize": 2
     },
     "[systemverilog]": {
+        "editor.defaultFormatter": "mshr-h.veriloghdl",
         "editor.formatOnSave": true
     },
     "[verilog]": {
+        "editor.defaultFormatter": "mshr-h.veriloghdl",
         "editor.formatOnSave": true
     },
     "files.trimTrailingWhitespace": true,
-    "files.insertFinalNewline": true
+    "files.insertFinalNewline": true,
+    "files.associations": {
+        "*.sv": "systemverilog",
+        "*.svh": "systemverilog",
+        "*.v": "verilog"
+    },
+    "verilog.languageServer.veribleVerilogLs.enabled": true,
+    "verilog.languageServer.veribleVerilogLs.path": "verible-verilog-ls"
 }
