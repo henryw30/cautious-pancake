@@ -1,0 +1,14 @@
+{
+  "name": "Ubuntu C++ Dev",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "containerEnv": {
+    "DISPLAY": "host.docker.internal:0"
+  },
+  "runArgs": [
+    // Ensures the container can resolve host.docker.internal on Linux/macOS
+    "--add-host=host.docker.internal:host-gateway"
+  ],
+  "remoteUser": "ubuntu"
+}
