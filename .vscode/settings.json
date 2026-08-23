@@ -1,0 +1,33 @@
+{
+    "editor.formatOnSave": true,
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        }
+    },
+    "[cpp]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools",
+        "editor.formatOnSave": true,
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2
+    },
+    "[c]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools",
+        "editor.formatOnSave": true,
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2
+    },
+    "[systemverilog]": {
+        "editor.formatOnSave": true
+    },
+    "[verilog]": {
+        "editor.formatOnSave": true
+    },
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true
+}
