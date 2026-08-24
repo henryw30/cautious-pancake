@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip pipx python3-venv \
     clang-format \
     help2man perl python3 make autoconf flex bison ccache libgoogle-perftools-dev numactl perl-doc libfl-dev zlib1g-dev \
-    libsdl2-dev \
+    libsdl2-dev liblz4-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Give the ubuntu user passwordless sudo access
