@@ -1,6 +1,6 @@
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import RisingEdge
+from cocotb.triggers import ReadOnly, RisingEdge
 
 
 @cocotb.test()
@@ -42,22 +42,16 @@ async def test_add(dut):
 
     # Release reset
     dut.i_rst_n.value = 1
-
-    # Put operands on inputs
     dut.i_a.value = 10
     dut.i_b.value = 20
-
     # IDLE -> RUN
     dut.i_start.value = 1
     await RisingEdge(dut.i_clk)
 
     # Deassert start
     dut.i_start.value = 0
-
-    # go to IDLE
     await RisingEdge(dut.i_clk)
-    await RisingEdge(dut.i_clk)
-    await RisingEdge(dut.i_clk)
+    await ReadOnly()
 
     # 10 + 20 = 30
     assert dut.o_sum.value.to_unsigned() == 30

@@ -17,20 +17,26 @@ module addr_8bit #(
   } state_t;
 
   state_t current_state, next_state;
-  logic [DATA_WIDTH-1:0] sum_;
+  logic [DATA_WIDTH-1:0] sum_, a_, b_;
 
   always_ff @(posedge i_clk or negedge i_rst_n) begin
     if (!i_rst_n) begin
       sum_ <= 0;
+      a_ <= 0;
+      b_ <= 0;
       current_state <= IDLE;
     end else begin
       current_state <= next_state;
-      sum_ <= sum_;
 
       case (current_state)
+        IDLE: begin
+          if (i_start) begin
+            a_ <= i_a;
+            b_ <= i_b;
+          end
+        end
         RUN: begin
-          // TODO: store i_a and i_b in register
-          sum_ <= i_a + i_b;
+          sum_ <= a_ + b_;
         end
         default: ;
       endcase
