@@ -1,57 +1,36 @@
 import cocotb
-from cocotb.clock import Clock
-from cocotb.triggers import ReadOnly, RisingEdge
+from cocotb.triggers import Timer
 
 
 @cocotb.test()
-async def test_reset(dut):
-    """Verify reset puts the DUT into its initial state."""
+async def test_addr_8bit_directed(dut):
+    async def check(a, b, cin, expected_sum, expected_h, expected_c):
+        dut.i_a.value = a
+        dut.i_b.value = b
+        dut.i_c.value = cin
 
-    # Start clock
-    cocotb.start_soon(Clock(dut.i_clk, 10, unit="ns").start())
+        await Timer(1, unit="ns")
 
-    # Apply reset
-    dut.i_rst_n.value = 0
-    dut.i_start.value = 0
-    dut.i_a.value = 0
-    dut.i_b.value = 0
+        assert int(dut.sum.value) == expected_sum
+        assert int(dut.f_h.value) == expected_h
+        assert int(dut.f_c.value) == expected_c
+        assert int(dut.f_z.value) == int(expected_sum == 0)
+        assert int(dut.f_n.value) == 0
 
-    # Wait for a clock edge while reset is active
-    await RisingEdge(dut.i_clk)
+    # 1 + 1 = 2
+    await check(0x01, 0x01, 0, 0x02, 0, 0)
 
-    # Release reset
-    dut.i_rst_n.value = 1
+    # Half carry: 0x0F + 1 = 0x10
+    await check(0x0F, 0x01, 0, 0x10, 1, 0)
 
-    # Sum should be zero after reset
-    assert dut.o_sum.value.to_unsigned() == 0
+    # Carry: 0xFF + 1 = 0x00
+    await check(0xFF, 0x01, 0, 0x00, 1, 1)
 
+    # Carry-in causes half carry: 0x0F + 0 + 1 = 0x10
+    await check(0x0F, 0x00, 1, 0x10, 1, 0)
 
-@cocotb.test()
-async def test_add(dut):
-    """Verify that two 8-bit values are added."""
+    # Carry-in causes full carry: 0xFF + 0 + 1 = 0x00
+    await check(0xFF, 0x00, 1, 0x00, 1, 1)
 
-    cocotb.start_soon(Clock(dut.i_clk, 10, unit="ns").start())
-
-    # Reset
-    dut.i_rst_n.value = 0
-    dut.i_start.value = 0
-    dut.i_a.value = 0
-    dut.i_b.value = 0
-
-    await RisingEdge(dut.i_clk)
-
-    # Release reset
-    dut.i_rst_n.value = 1
-    dut.i_a.value = 10
-    dut.i_b.value = 20
-    # IDLE -> RUN
-    dut.i_start.value = 1
-    await RisingEdge(dut.i_clk)
-
-    # Deassert start
-    dut.i_start.value = 0
-    await RisingEdge(dut.i_clk)
-    await ReadOnly()
-
-    # 10 + 20 = 30
-    assert dut.o_sum.value.to_unsigned() == 30
+    # No carry
+    await check(0x12, 0x23, 0, 0x35, 0, 0)
