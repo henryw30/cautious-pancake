@@ -1,66 +1,56 @@
 module addr_8bit #(
     parameter int DATA_WIDTH = 8
 ) (
-    input logic i_clk,
-    input logic i_rst_n,
-    input logic i_start,
     input logic [DATA_WIDTH-1:0] i_a,
     input logic [DATA_WIDTH-1:0] i_b,
+    input logic i_carry_in,
+    input logic i_sub,
 
-    output logic [DATA_WIDTH-1:0] o_sum
+    output logic [DATA_WIDTH-1:0] result,
+    output logic f_z,
+    output logic f_n,
+    output logic f_h,
+    output logic f_c
 );
+  logic [DATA_WIDTH:0] full_sum;
+  logic [         4:0] half_sum;
+  logic [         4:0] b_low_with_carry;
+  logic [DATA_WIDTH:0] b_with_carry;
 
-  typedef enum logic [1:0] {
-    IDLE = 2'b00,
-    RUN  = 2'b01,
-    DONE = 2'b10
-  } state_t;
-
-  state_t current_state, next_state;
-  logic [DATA_WIDTH-1:0] sum_, a_, b_;
-
-  always_ff @(posedge i_clk or negedge i_rst_n) begin
-    if (!i_rst_n) begin
-      sum_ <= 0;
-      a_ <= 0;
-      b_ <= 0;
-      current_state <= IDLE;
-    end else begin
-      current_state <= next_state;
-
-      case (current_state)
-        IDLE: begin
-          if (i_start) begin
-            a_ <= i_a;
-            b_ <= i_b;
-          end
-        end
-        RUN: begin
-          sum_ <= a_ + b_;
-        end
-        default: ;
-      endcase
-    end
-  end
-
-  // next state logic
   always_comb begin
-    next_state = current_state;
+    result           = '0;
+    f_z              = 1'b0;
+    f_n              = i_sub;
+    f_h              = 1'b0;
+    f_c              = 1'b0;
+    full_sum         = '0;
+    half_sum         = '0;
+    b_low_with_carry = '0;
+    b_with_carry     = '0;
 
-    case (current_state)
-      IDLE: begin
-        if (i_start) next_state = RUN;
-      end
-      RUN: begin
-        next_state = DONE;
-      end
-      DONE: begin
-        next_state = IDLE;
-      end
-      default: next_state = IDLE;
-    endcase
+    if (i_sub) begin
+      // SUB/SBC
+      full_sum         = {1'b0, i_a} + {1'b0, ~i_b} + (9'd1 - {8'd0, i_carry_in});
+      result           = full_sum[DATA_WIDTH-1:0];
+
+      // carry flags
+      b_low_with_carry = {1'b0, i_b[3:0]} + {4'd0, i_carry_in};
+      b_with_carry     = {1'b0, i_b} + {8'd0, i_carry_in};
+
+      f_h              = {1'b0, i_a[3:0]} < b_low_with_carry;
+      f_c              = {1'b0, i_a} < b_with_carry;
+    end else begin
+      // ADD/ADC
+      full_sum = {1'b0, i_a} + {1'b0, i_b} + {8'd0, i_carry_in};
+      result = full_sum[DATA_WIDTH-1:0];
+      half_sum = {1'b0, i_a[3:0]} + {1'b0, i_b[3:0]} + {4'd0 + i_carry_in};
+
+      // carry flags
+      f_h = half_sum[4];
+      f_c = full_sum[DATA_WIDTH];
+    end
+
+    f_z = (result == '0);
   end
-
-  assign o_sum = sum_;
 
 endmodule

@@ -1,57 +1,158 @@
 import cocotb
-from cocotb.clock import Clock
-from cocotb.triggers import ReadOnly, RisingEdge
+from cocotb.triggers import Timer
 
 
 @cocotb.test()
-async def test_reset(dut):
-    """Verify reset puts the DUT into its initial state."""
+async def test_subtraction_examples(dut):
 
-    # Start clock
-    cocotb.start_soon(Clock(dut.i_clk, 10, unit="ns").start())
+    async def check(a, b, cin, expected_result, expected_h, expected_c):
+        dut.i_a.value = a
+        dut.i_b.value = b
+        dut.i_carry_in.value = cin
+        dut.i_sub.value = 1
 
-    # Apply reset
-    dut.i_rst_n.value = 0
-    dut.i_start.value = 0
-    dut.i_a.value = 0
-    dut.i_b.value = 0
+        await Timer(1, unit="ns")
 
-    # Wait for a clock edge while reset is active
-    await RisingEdge(dut.i_clk)
+        assert int(dut.result.value) == expected_result
+        assert int(dut.f_z.value) == int(expected_result == 0)
+        assert int(dut.f_n.value) == 1
+        assert int(dut.f_h.value) == expected_h
+        assert int(dut.f_c.value) == expected_c
 
-    # Release reset
-    dut.i_rst_n.value = 1
+    # 5 - 3 = 2
+    await check(0x05, 0x03, 0, 0x02, 0, 0)
 
-    # Sum should be zero after reset
-    assert dut.o_sum.value.to_unsigned() == 0
+    # 0x10 - 1 = 0x0F
+    # Half borrow, but no full borrow
+    await check(0x10, 0x01, 0, 0x0F, 1, 0)
+
+    # 0 - 1 = 0xFF
+    # Half borrow and full borrow
+    await check(0x00, 0x01, 0, 0xFF, 1, 1)
+
+    # 0x10 - 0 - 1 = 0x0F
+    # SBC with carry-in
+    await check(0x10, 0x00, 1, 0x0F, 1, 0)
+
+    # 0 - 0 - 1 = 0xFF
+    # SBC causes full borrow
+    await check(0x00, 0x00, 1, 0xFF, 1, 1)
+
+    # 1 - 1 = 0
+    await check(0x01, 0x01, 0, 0x00, 0, 0)
 
 
 @cocotb.test()
-async def test_add(dut):
-    """Verify that two 8-bit values are added."""
+async def test_alu_8bit_exhaustive(dut):
+    """
+    Exhaustively test:
 
-    cocotb.start_soon(Clock(dut.i_clk, 10, unit="ns").start())
+        ADD: A + B
+        ADC: A + B + C
+        SUB: A - B
+        SBC: A - B - C
 
-    # Reset
-    dut.i_rst_n.value = 0
-    dut.i_start.value = 0
-    dut.i_a.value = 0
-    dut.i_b.value = 0
+    For all 256 x 256 x 2 input combinations.
+    """
 
-    await RisingEdge(dut.i_clk)
+    for a in range(256):
+        for b in range(256):
+            for carry_in in range(2):
+                # -------------------------------------------------
+                # ADD / ADC
+                # -------------------------------------------------
 
-    # Release reset
-    dut.i_rst_n.value = 1
-    dut.i_a.value = 10
-    dut.i_b.value = 20
-    # IDLE -> RUN
-    dut.i_start.value = 1
-    await RisingEdge(dut.i_clk)
+                dut.i_a.value = a
+                dut.i_b.value = b
+                dut.i_carry_in.value = carry_in
+                dut.i_sub.value = 0
 
-    # Deassert start
-    dut.i_start.value = 0
-    await RisingEdge(dut.i_clk)
-    await ReadOnly()
+                await Timer(1, unit="ns")
 
-    # 10 + 20 = 30
-    assert dut.o_sum.value.to_unsigned() == 30
+                full_sum = a + b + carry_in
+                expected_result = full_sum & 0xFF
+                expected_c = int(full_sum > 0xFF)
+
+                low_sum = (a & 0x0F) + (b & 0x0F) + carry_in
+                expected_h = int(low_sum > 0x0F)
+
+                expected_z = int(expected_result == 0)
+                expected_n = 0
+
+                assert int(dut.result.value) == expected_result, (
+                    f"ADD result failure: "
+                    f"A={a:02X} B={b:02X} C={carry_in} "
+                    f"expected={expected_result:02X} "
+                    f"got={int(dut.result.value):02X}"
+                )
+
+                assert int(dut.f_z.value) == expected_z, (
+                    f"ADD Z failure: A={a:02X} B={b:02X} C={carry_in}"
+                )
+
+                assert int(dut.f_n.value) == expected_n, (
+                    f"ADD N failure: A={a:02X} B={b:02X} C={carry_in}"
+                )
+
+                assert int(dut.f_h.value) == expected_h, (
+                    f"ADD H failure: "
+                    f"A={a:02X} B={b:02X} C={carry_in} "
+                    f"expected={expected_h} "
+                    f"got={int(dut.f_h.value)}"
+                )
+
+                assert int(dut.f_c.value) == expected_c, (
+                    f"ADD C failure: "
+                    f"A={a:02X} B={b:02X} C={carry_in} "
+                    f"expected={expected_c} "
+                    f"got={int(dut.f_c.value)}"
+                )
+
+                # -------------------------------------------------
+                # SUB / SBC
+                # -------------------------------------------------
+
+                dut.i_sub.value = 1
+
+                await Timer(1, unit="ns")
+
+                full_sub = a - b - carry_in
+                expected_result = full_sub & 0xFF
+
+                # SM83 subtraction flags represent BORROW.
+                expected_c = int(a < (b + carry_in))
+                expected_h = int((a & 0x0F) < ((b & 0x0F) + carry_in))
+
+                expected_z = int(expected_result == 0)
+                expected_n = 1
+
+                assert int(dut.result.value) == expected_result, (
+                    f"SUB result failure: "
+                    f"A={a:02X} B={b:02X} C={carry_in} "
+                    f"expected={expected_result:02X} "
+                    f"got={int(dut.result.value):02X}"
+                )
+
+                assert int(dut.f_z.value) == expected_z, (
+                    f"SUB Z failure: A={a:02X} B={b:02X} C={carry_in}"
+                )
+
+                assert int(dut.f_n.value) == expected_n, (
+                    f"SUB N failure: A={a:02X} B={b:02X} C={carry_in}"
+                )
+
+                assert int(dut.f_h.value) == expected_h, (
+                    f"SUB H failure: "
+                    f"A={a:02X} B={b:02X} C={carry_in} "
+                    f"expected={expected_h} "
+                    f"got={int(dut.f_h.value)}"
+                )
+
+                assert int(dut.f_c.value) == expected_c, (
+                    f"SUB C failure: "
+                    f"A={a:02X} B={b:02X} C={carry_in} "
+                    f"expected={expected_c} "
+                    f"got={int(dut.f_c.value)}"
+                )
+
+    dut._log.info("All 262144 ADD/ADC/SUB/SBC tests passed!")
