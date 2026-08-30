@@ -3,7 +3,7 @@ module addr_8bit #(
 ) (
     input logic [DATA_WIDTH-1:0] i_a,
     input logic [DATA_WIDTH-1:0] i_b,
-    input logic i_c,
+    input logic i_carry_in,
 
     output logic [DATA_WIDTH-1:0] sum,
     output logic f_z,
@@ -16,9 +16,9 @@ module addr_8bit #(
   logic [4:0] half_sum;
 
   always_comb begin
-    {f_c, sum} = i_a + i_b + i_c;
+    {f_c, sum} = i_a + i_b + i_carry_in;
 
-    half_sum = {1'b0, i_a[3:0]} + {1'b0, i_b[3:0]} + i_c;
+    half_sum = {1'b0, i_a[3:0]} + {1'b0, i_b[3:0]} + i_carry_in;
 
     f_z = (sum == '0);
     f_h = half_sum[4];
