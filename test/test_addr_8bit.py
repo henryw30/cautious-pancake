@@ -7,7 +7,7 @@ from cocotb_tools.runner import get_runner
 
 proj_path = Path(__file__).resolve().parent
 rtl_path = proj_path.parent / "rtl"
-build_dir = proj_path.parent / "build"
+build_dir = proj_path.parent / "build" / "addr_8bit"
 
 
 def test_addr_8bit_runner():
