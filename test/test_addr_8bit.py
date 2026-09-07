@@ -1,5 +1,32 @@
+import os
+from pathlib import Path
+
 import cocotb
 from cocotb.triggers import Timer
+from cocotb_tools.runner import get_runner
+
+proj_path = Path(__file__).resolve().parent
+rtl_path = proj_path.parent / "rtl"
+build_dir = proj_path.parent / "build"
+
+
+def test_addr_8bit_runner():
+    sim = os.getenv("SIM", "verilator")
+    runner = get_runner(sim)
+    runner.build(
+        sources=[rtl_path / "addr_8bit.sv"],
+        hdl_toplevel="addr_8bit",
+        build_dir=build_dir,
+        build_args=[
+            "--trace-fst",
+            "--trace-structs",
+        ],
+        always=True,
+    )
+    runner.test(
+        hdl_toplevel="addr_8bit",
+        test_module="test_addr_8bit",
+    )
 
 
 @cocotb.test()
@@ -45,14 +72,7 @@ async def test_subtraction_examples(dut):
 @cocotb.test()
 async def test_alu_8bit_exhaustive(dut):
     """
-    Exhaustively test:
-
-        ADD: A + B
-        ADC: A + B + C
-        SUB: A - B
-        SBC: A - B - C
-
-    For all 256 x 256 x 2 input combinations.
+    Exhaustively test ADD/ADC/SUB/SBC for all 256 x 256 x 2 input combinations.
     """
 
     for a in range(256):
