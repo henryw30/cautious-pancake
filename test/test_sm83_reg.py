@@ -74,3 +74,68 @@ async def test_write_read_b(dut):
     assert dut.o_read_data_a.value == 0xFF, (
         f"Expected o_read_data_a to be 0xFF, got {dut.o_read_data_a.value}"
     )
+
+
+@cocotb.test()
+async def test_write_read_bc(dut):
+    """Write 0xBEEF to register BC, then read it back on port B."""
+
+    cocotb.start_soon(Clock(dut.i_clk, 10, unit="ns").start())
+
+    # Reset the DUT
+    dut.i_rst.value = 1
+    dut.i_write_en.value = 0
+    dut.i_write_sel.value = 0
+    dut.i_write_data.value = 0
+    dut.i_read_sel_a.value = 0
+    dut.i_read_sel_b.value = 0
+    dut.i_pair_write_en.value = 0
+    dut.i_pair_write_sel.value = 0
+    dut.i_pair_write_data.value = 0
+    dut.i_pair_read_sel.value = 0
+
+    await RisingEdge(dut.i_clk)
+    await RisingEdge(dut.i_clk)
+    dut.i_rst.value = 0
+    await RisingEdge(dut.i_clk)
+
+    # Write to C first, then it should get overwritten later
+    dut.i_write_en.value = 1
+    dut.i_write_sel.value = 0b001
+    dut.i_write_data.value = 0x11
+    await RisingEdge(dut.i_clk)
+
+    dut.i_write_en.value = 0
+    dut.i_read_sel_a.value = 0b001
+    dut.i_read_sel_b.value = 0b001
+    await RisingEdge(dut.i_clk)
+
+    assert dut.o_read_data_a.value == 0x11, (
+        f"Expected o_read_data_a to be 0x11, got {dut.o_read_data_a.value}"
+    )
+    assert dut.o_read_data_b.value == 0x11, (
+        f"Expected o_read_data_b to be 0x11, got {dut.o_read_data_b.value}"
+    )
+
+    # Write to BC
+    dut.i_pair_write_data.value = 0xDEAD
+    dut.i_pair_write_en.value = 1
+    dut.i_pair_write_sel.value = 0b00
+    await RisingEdge(dut.i_clk)
+
+    # Read BC as a 16 bit reg and individually as 8 bit
+    dut.i_pair_write_en.value = 0
+    dut.i_pair_read_sel.value = 0b00
+    dut.i_read_sel_a.value = 0x000
+    dut.i_read_sel_b.value = 0x001
+    await ReadOnly()
+
+    assert dut.o_pair_read_data.value == 0xDEAD, (
+        f"Expected 0xDEAD, got {dut.o_pair_read_data.value}"
+    )
+    assert dut.o_read_data_a.value == 0xDE, (
+        f"Expected 0xDE, got {dut.o_read_data_a.value}"
+    )
+    assert dut.o_read_data_b.value == 0xAD, (
+        f"Expected 0xAD, got {dut.o_read_data_b.value}"
+    )
