@@ -2,7 +2,7 @@ module sm83_reg #(
     parameter int DATA_WIDTH = 8
 ) (
     input logic i_clk,
-    input logic i_rst,
+    input logic i_rst_n,
 
     // 8 bit signals
     input logic [2:0] i_read_sel_a,
@@ -40,8 +40,8 @@ module sm83_reg #(
   // logic [ADDR_WIDTH-1:0] sp;
   // logic [ADDR_WIDTH-1:0] pc;
 
-  always_ff @(posedge i_clk or posedge i_rst) begin
-    if (i_rst) begin
+  always_ff @(posedge i_clk or negedge i_rst_n) begin
+    if (!i_rst_n) begin
       a <= '0;
       b <= '0;
       c <= '0;

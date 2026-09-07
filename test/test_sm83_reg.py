@@ -38,7 +38,7 @@ async def test_write_read_b(dut):
     cocotb.start_soon(Clock(dut.i_clk, 10, unit="ns").start())
 
     # Reset the DUT
-    dut.i_rst.value = 1
+    dut.i_rst_n.value = 0
     dut.i_write_en.value = 0
     dut.i_write_sel.value = 0
     dut.i_write_data.value = 0
@@ -51,7 +51,7 @@ async def test_write_read_b(dut):
 
     await RisingEdge(dut.i_clk)
     await RisingEdge(dut.i_clk)
-    dut.i_rst.value = 0
+    dut.i_rst_n.value = 1
     await RisingEdge(dut.i_clk)
 
     # Write 0xFF to register B (i_write_sel = 3'b000)
@@ -83,7 +83,7 @@ async def test_write_read_bc(dut):
     cocotb.start_soon(Clock(dut.i_clk, 10, unit="ns").start())
 
     # Reset the DUT
-    dut.i_rst.value = 1
+    dut.i_rst_n.value = 0
     dut.i_write_en.value = 0
     dut.i_write_sel.value = 0
     dut.i_write_data.value = 0
@@ -96,7 +96,7 @@ async def test_write_read_bc(dut):
 
     await RisingEdge(dut.i_clk)
     await RisingEdge(dut.i_clk)
-    dut.i_rst.value = 0
+    dut.i_rst_n.value = 1
     await RisingEdge(dut.i_clk)
 
     # Write to C first, then it should get overwritten later
