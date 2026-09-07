@@ -109,6 +109,7 @@ async def test_write_read_bc(dut):
     dut.i_read_sel_a.value = 0b001
     dut.i_read_sel_b.value = 0b001
     await RisingEdge(dut.i_clk)
+    await ReadOnly()
 
     assert dut.o_read_data_a.value == 0x11, (
         f"Expected o_read_data_a to be 0x11, got {dut.o_read_data_a.value}"
@@ -117,6 +118,7 @@ async def test_write_read_bc(dut):
         f"Expected o_read_data_b to be 0x11, got {dut.o_read_data_b.value}"
     )
 
+    await RisingEdge(dut.i_clk)
     # Write to BC
     dut.i_pair_write_data.value = 0xDEAD
     dut.i_pair_write_en.value = 1
@@ -128,6 +130,7 @@ async def test_write_read_bc(dut):
     dut.i_pair_read_sel.value = 0b00
     dut.i_read_sel_a.value = 0x000
     dut.i_read_sel_b.value = 0x001
+    await RisingEdge(dut.i_clk)
     await ReadOnly()
 
     assert dut.o_pair_read_data.value == 0xDEAD, (
