@@ -65,5 +65,4 @@ RUN wget -O verible.tar.gz https://github.com/chipsalliance/verible/releases/dow
 RUN python3 -m venv /home/ubuntu/my_python_venv
 ENV PATH="/home/ubuntu/my_python_venv/bin:$PATH"
 # cocotb
-ENV COCOTB_IGNORE_PYTHON_REQUIRES=1
 RUN pip install cocotb
