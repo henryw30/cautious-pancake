@@ -47,6 +47,7 @@ module logic_8bit #(
       OP_CPL: begin
         result = ~i_a;
 
+        // TODO: have ALU produce write enable flags and WE flags will determine if f_c and f_z get updated
         // f_c and f_z do not get set for CPL
         f_z = '0;
         f_n = '1;
