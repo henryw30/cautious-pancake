@@ -27,7 +27,7 @@ RUN case "${TARGETARCH}" in \
 # Verilator Builder
 # ============================================================
 FROM mcr.microsoft.com/devcontainers/cpp:ubuntu26.04 AS verilator-builder
-ARG VERILATOR_VERSION=v5.050
+ARG VERILATOR_VERSION=v5.052
 
 RUN apt-get update && apt-get install -y \
     autoconf \
