@@ -10,7 +10,7 @@
     // Ensures the container can resolve host.docker.internal on Linux/macOS
     "--add-host=host.docker.internal:host-gateway"
   ],
-  "remoteUser": "ubuntu",
+  "remoteUser": "vscode",
   "customizations": {
     "vscode": {
       "extensions": [

@@ -2,6 +2,7 @@
     "editor.formatOnSave": true,
     "editor.insertSpaces": true,
     "editor.tabSize": 4,
+    "python.defaultInterpreterPath": "/home/vscode/my_python_venv/bin/python",
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.formatOnSave": true,
